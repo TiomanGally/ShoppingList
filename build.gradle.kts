@@ -1,7 +1,8 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
-    kotlin("plugin.allopen") version "1.6.10"
+    kotlin("jvm") version "1.6.21"
+    kotlin("plugin.allopen") version "1.6.21"
     id("io.quarkus")
+    id("org.jetbrains.kotlin.plugin.noarg") version "1.6.21"
 }
 
 repositories {
@@ -18,12 +19,17 @@ dependencies {
     implementation("io.quarkus:quarkus-resteasy-reactive")
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-reactive-pg-client")
+    implementation("org.jetbrains.kotlin:kotlin-noarg")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.quarkus:quarkus-arc")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
+}
+
+noArg {
+    annotation("de.novatec.configuration.NoArgConstructor")
 }
 
 group = "de.novatec"
@@ -33,6 +39,7 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
+
 
 allOpen {
     annotation("javax.ws.rs.Path")
