@@ -2,15 +2,12 @@ package de.novatec.port
 
 import de.novatec.domain.ItemEntity
 import de.novatec.domain.ItemService
-import org.hibernate.HibernateException
 import org.jboss.resteasy.reactive.RestPath
 import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.net.URI
 import javax.enterprise.context.ApplicationScoped
-import javax.ws.rs.GET
-import javax.ws.rs.POST
-import javax.ws.rs.Path
+import javax.transaction.Transactional
+import javax.ws.rs.*
 
 @Path("/items")
 @ApplicationScoped
@@ -21,33 +18,58 @@ class ItemRestController(
     @GET
     @Path("/")
     suspend fun getAllItems(): RestResponse<ItemsResponse> {
-        val response = itemService
+        val items = itemService
             .getAll()
             .let { ItemsResponse.from(it) }
+
+        return RestResponse.ok(items)
+    }
+
+    @GET
+    @Path("/{item}")
+    suspend fun getByItem(
+        @RestPath("item") item: String
+    ): RestResponse<ItemEntity> {
+        val response = itemService
+            .findItem(item)
+            ?: throw NotFoundException("Item [$item] does not exist")
 
         return RestResponse.ok(response)
     }
 
     @POST
     @Path("/{item}")
+    @Transactional
     suspend fun persistNewItem(
         @RestPath("item") item: String
     ): RestResponse<ItemEntity> {
         itemService.persist(ItemEntity(item))
 
-        return RestResponse.created(URI.create("/items"))
+        return RestResponse.created(URI.create("/items/$item"))
     }
 
-    @Suppress("unused")
-    @ServerExceptionMapper
-    fun mapDuplicateItem(exception: HibernateException): RestResponse<ErrorMessage> {
-        return RestResponse.ResponseBuilder
-            .create<ErrorMessage>(RestResponse.Status.BAD_REQUEST.statusCode)
-            .entity(ErrorMessage(exception.message!!))
-            .build()
+    @PATCH
+    @Path("/{item}")
+    @Transactional
+    suspend fun updateItem(
+        @RestPath("item") item: String,
+        itemEntity: ItemEntity
+    ): RestResponse<ItemEntity> {
+        itemService.updateItem(item, itemEntity.item)
+
+        return RestResponse.ok()
     }
 
-    data class ErrorMessage(val message: String)
+    @DELETE
+    @Path("/{item}")
+    @Transactional
+    suspend fun deleteItem(
+        @RestPath("item") item: String,
+    ): RestResponse<ItemEntity> {
+        itemService.delete(item)
+
+        return RestResponse.ok()
+    }
 
     data class ItemsResponse(
         val items: List<String>
