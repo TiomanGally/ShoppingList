@@ -6,23 +6,40 @@ Be happy! 🥳 This will do everything for your household 😉
 
 You can also add receipts and just add the receipt and all ingredients will be added to your shopping list!!1
 
-## Running the application in dev mode
+## Getting Started
 
-You can run your application in dev mode that enables live coding using:
+Start the database docker container via
+
 ```shell script
-./gradlew quarkusDev
+./scripts/startPostgresContainer.sh
 ```
+
+Then build the application initially
+
+```shell script
+./gradlew build
+```
+
+And finally start the application
+
+```shell script
+quarkus dev
+```
+
+You can also import the insomnia collection which is located in the scripts folder.
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
 ## Creating a native executable
 
-You can create a native executable using: 
+You can create a native executable using:
+
 ```shell script
 ./gradlew build -Dquarkus.package.type=native
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
+Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+
 ```shell script
 ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
 ```
