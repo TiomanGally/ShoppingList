@@ -12,7 +12,7 @@ import javax.ws.rs.ext.Provider
 
 @Provider
 class RestRequestAndResponseLoggerInterceptor(
-    @ConfigProperty(name = "quarkus.http.header.include-log") private val includeHttpHeaders: List<String>
+    @ConfigProperty(name = "custom.quarkus.http.header.include-log") private val includeHttpHeaders: List<String>
 ) : ContainerRequestFilter, ContainerResponseFilter {
 
     private val log: Logger = LoggerFactory.getLogger(RestRequestAndResponseLoggerInterceptor::class.java)

@@ -4,11 +4,11 @@ interface ItemService {
 
     suspend fun getAll(): List<ItemEntity>
 
-    suspend fun findItem(item: String): ItemEntity?
+    suspend fun findById(id: Long): ItemEntity?
 
-    suspend fun persist(itemEntity: ItemEntity): ItemEntity
+    suspend fun create(itemEntity: ItemEntity): ItemEntity
 
-    suspend fun updateItem(oldItem: String, newItem: String)
+    suspend fun updateItemById(id: Long, item: String)
 
-    suspend fun delete(item: String)
+    suspend fun deleteById(id: Long)
 }

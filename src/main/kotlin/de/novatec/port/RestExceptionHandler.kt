@@ -16,5 +16,14 @@ class RestExceptionHandler {
             .build()
     }
 
+    @Suppress("unused")
+    @ServerExceptionMapper
+    fun mapGeneralError(throwable: Throwable): RestResponse<ErrorMessage> {
+        return RestResponse.ResponseBuilder
+            .create<ErrorMessage>(RestResponse.Status.INTERNAL_SERVER_ERROR.statusCode)
+            .entity(ErrorMessage(throwable.message))
+            .build()
+    }
+
     data class ErrorMessage(val message: String?)
 }

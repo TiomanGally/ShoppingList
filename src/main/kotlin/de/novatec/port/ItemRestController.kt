@@ -1,5 +1,6 @@
 package de.novatec.port
 
+import de.novatec.configuration.NoArgConstructor
 import de.novatec.domain.ItemEntity
 import de.novatec.domain.ItemService
 import org.jboss.resteasy.reactive.RestPath
@@ -17,22 +18,20 @@ class ItemRestController(
 
     @GET
     @Path("/")
-    suspend fun getAllItems(): RestResponse<ItemsResponse> {
-        val items = itemService
-            .getAll()
-            .let { ItemsResponse.from(it) }
+    suspend fun getAllItems(): RestResponse<List<ItemEntity>> {
+        val items = itemService.getAll()
 
         return RestResponse.ok(items)
     }
 
     @GET
-    @Path("/{item}")
+    @Path("/{id}")
     suspend fun getByItem(
-        @RestPath("item") item: String
+        @RestPath("id") id: Long
     ): RestResponse<ItemEntity> {
         val response = itemService
-            .findItem(item)
-            ?: throw NotFoundException("Item [$item] does not exist")
+            .findById(id)
+            ?: throw NotFoundException("Item [$id] does not exist")
 
         return RestResponse.ok(response)
     }
@@ -43,39 +42,39 @@ class ItemRestController(
     suspend fun persistNewItem(
         @RestPath("item") item: String
     ): RestResponse<ItemEntity> {
-        itemService.persist(ItemEntity(item))
+        val itemEntity = ItemEntity(
+            item = item
+        )
+        val createdResource = itemService.create(itemEntity)
 
-        return RestResponse.created(URI.create("/items/$item"))
+        return RestResponse.created(URI.create("/items/${createdResource.id}"))
     }
 
     @PATCH
-    @Path("/{item}")
+    @Path("/{id}")
     @Transactional
     suspend fun updateItem(
-        @RestPath("item") item: String,
-        itemEntity: ItemEntity
+        @RestPath("id") id: Long,
+        updateItemRequest: UpdateItemRequest
     ): RestResponse<ItemEntity> {
-        itemService.updateItem(item, itemEntity.item)
+        println(updateItemRequest.item)
+        itemService.updateItemById(id, updateItemRequest.item)
 
         return RestResponse.ok()
     }
 
     @DELETE
-    @Path("/{item}")
+    @Path("/{id}")
     @Transactional
     suspend fun deleteItem(
-        @RestPath("item") item: String,
+        @RestPath("id") id: Long,
     ): RestResponse<ItemEntity> {
-        itemService.delete(item)
+        itemService.deleteById(id)
 
         return RestResponse.ok()
     }
 
-    data class ItemsResponse(
-        val items: List<String>
-    ) {
-        companion object {
-            fun from(itemEntities: List<ItemEntity>) = ItemsResponse(itemEntities.map { it.item })
-        }
-    }
+    @NoArgConstructor
+    data class UpdateItemRequest(val item: String)
 }
+
