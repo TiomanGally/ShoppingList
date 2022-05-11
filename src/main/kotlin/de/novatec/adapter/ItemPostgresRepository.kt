@@ -1,10 +1,10 @@
 package de.novatec.adapter
 
-import de.novatec.domain.ItemEntity
-import de.novatec.domain.ItemService
+import de.novatec.domain.item.ItemEntity
+import de.novatec.domain.item.ItemService
 import io.quarkus.hibernate.reactive.panache.PanacheRepository
 import io.quarkus.panache.common.Sort
-import io.smallrye.mutiny.coroutines.awaitSuspending
+import io.smallrye.mutiny.Uni
 import javax.enterprise.context.ApplicationScoped
 
 @ApplicationScoped
@@ -12,32 +12,34 @@ class ItemPostgresRepository : ItemService {
 
     private object Repository : PanacheRepository<ItemEntity>
 
-    override suspend fun getAll(): List<ItemEntity> {
+    override fun getAll(): Uni<List<ItemEntity>> {
         return Repository
             .listAll(Sort.by("id"))
-            .awaitSuspending()
     }
 
-    override suspend fun findById(id: Long): ItemEntity? {
+    override fun findById(id: Long): Uni<ItemEntity?> {
         return Repository
             .findById(id)
-            .awaitSuspending()
     }
 
-    override suspend fun create(itemEntity: ItemEntity): ItemEntity {
+    override fun findByItems(items: List<String>): Uni<List<ItemEntity>> {
+        return Repository
+            .find("item in (?1)", items)
+            .list()
+    }
+
+    override fun create(itemEntity: ItemEntity): Uni<ItemEntity> {
         return Repository
             .persistAndFlush(itemEntity)
-            .awaitSuspending()
     }
 
-    override suspend fun updateItemById(id: Long, item: String) {
-        Repository
+    override fun updateItemById(id: Long, item: String): Uni<Int> {
+        return Repository
             .update("item = ?1 where id = ?2", item, id)
-            .awaitSuspending()
     }
 
-    override suspend fun deleteById(id: Long) {
-        Repository.deleteById(id).awaitSuspending()
-        Repository.flush().awaitSuspending()
+    override fun deleteById(id: Long): Uni<Boolean> {
+        return Repository
+            .deleteById(id)
     }
 }

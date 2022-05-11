@@ -1,13 +1,14 @@
 package de.novatec.port
 
 import de.novatec.configuration.NoArgConstructor
-import de.novatec.domain.ItemEntity
-import de.novatec.domain.ItemService
+import de.novatec.domain.item.ItemEntity
+import de.novatec.domain.item.ItemService
+import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional
+import io.smallrye.mutiny.Uni
 import org.jboss.resteasy.reactive.RestPath
 import org.jboss.resteasy.reactive.RestResponse
 import java.net.URI
 import javax.enterprise.context.ApplicationScoped
-import javax.transaction.Transactional
 import javax.ws.rs.*
 
 @Path("/items")
@@ -18,63 +19,80 @@ class ItemRestController(
 
     @GET
     @Path("/")
-    suspend fun getAllItems(): RestResponse<List<ItemEntity>> {
-        val items = itemService.getAll()
+    fun getAllItems(): Uni<RestResponse<List<ItemEntity>>> {
 
-        return RestResponse.ok(items)
+        return itemService
+            .getAll()
+            .onItem().transform { RestResponse.ok(it) }
     }
 
     @GET
     @Path("/{id}")
-    suspend fun getByItem(
+    fun getByItem(
         @RestPath("id") id: Long
-    ): RestResponse<ItemEntity> {
-        val response = itemService
-            .findById(id)
-            ?: throw NotFoundException("Item [$id] does not exist")
+    ): Uni<RestResponse<ItemEntity>> {
 
-        return RestResponse.ok(response)
+        return itemService
+            .findById(id)
+            .onItem().transform {
+                if (it == null)
+                    RestResponse.notFound()
+                else
+                    RestResponse.ok(it)
+            }
     }
 
     @POST
     @Path("/{item}")
-    @Transactional
-    suspend fun persistNewItem(
+    @ReactiveTransactional
+    fun persistNewItem(
         @RestPath("item") item: String
-    ): RestResponse<ItemEntity> {
-        val itemEntity = ItemEntity(
-            item = item
-        )
-        val createdResource = itemService.create(itemEntity)
+    ): Uni<RestResponse<ItemEntity>> {
+        val itemEntity = ItemEntity(item = item)
 
-        return RestResponse.created(URI.create("/items/${createdResource.id}"))
+        return itemService
+            .create(itemEntity)
+            .onItem().transform { URI.create("/items/${it.id}") }
+            .onItem().transform { RestResponse.created(it) }
     }
 
     @PATCH
     @Path("/{id}")
-    @Transactional
-    suspend fun updateItem(
+    @ReactiveTransactional
+    fun updateItem(
         @RestPath("id") id: Long,
         updateItemRequest: UpdateItemRequest
-    ): RestResponse<ItemEntity> {
-        println(updateItemRequest.item)
-        itemService.updateItemById(id, updateItemRequest.item)
+    ): Uni<RestResponse<ItemEntity>> {
 
-        return RestResponse.ok()
+        return itemService
+            .updateItemById(id, updateItemRequest.item)
+            .onItem().transform {
+                if (it == 0) {
+                    RestResponse.notFound()
+                } else {
+                    RestResponse.ok()
+                }
+            }
     }
 
     @DELETE
     @Path("/{id}")
-    @Transactional
-    suspend fun deleteItem(
+    @ReactiveTransactional
+    fun deleteItem(
         @RestPath("id") id: Long,
-    ): RestResponse<ItemEntity> {
-        itemService.deleteById(id)
+    ): Uni<RestResponse<ItemEntity>> {
 
-        return RestResponse.ok()
+        return itemService
+            .deleteById(id)
+            .onItem().transform {
+                if (it) {
+                    RestResponse.noContent()
+                } else {
+                    RestResponse.notFound()
+                }
+            }
     }
 
     @NoArgConstructor
     data class UpdateItemRequest(val item: String)
 }
-
