@@ -1,4 +1,4 @@
-package de.novatec.port
+package de.novatec.port.rest
 
 import org.hibernate.HibernateException
 import org.jboss.resteasy.reactive.RestResponse
